@@ -94,6 +94,8 @@ oc get pods | grep ${DATABASE_SERVICE_NAME} | grep -v -e -deploy -e -build
 oc port-forward pod/postgresql-1-lk87v 15432:5432
 ```
 
+## Deploy APP Local
+
 ```shell script
 psql ${POSTGRESQL_DATABASE} ${POSTGRESQL_USER} --host=127.0.0.1 --port=15432
 ```
@@ -113,4 +115,51 @@ curl http://localhost:8080/person | jq
 
 ```shell script
 curl http://localhost:8080/q/health | jq
+```
+
+## Deploy APP Quay.io
+
+```shell script
+docker login -u rh_ee_lfalero quay.io
+```
+
+```shell script
+./mvnw package -DskipTests -Dquarkus.container-image.push=true
+```
+
+```shell script
+./mvnw package -Pnative -DskipTests -Dquarkus.native.container-build=true
+```
+
+## Deploy APP Openshift
+
+```shell script
+oc new-project quarkus
+```
+
+```shell script
+oc create secret generic postgresql-secret \
+    --from-literal DB_USER=${POSTGRESQL_USER} \
+    --from-literal DB_PASSWORD=${POSTGRESQL_PASSWORD} \
+    --from-literal DB_HOST=${DATABASE_HOST} \
+    --from-literal DB_PORT=${POSTGRESQL_POST} \
+    --from-literal DB_NAME=${POSTGRESQL_DATABASE}
+```
+
+```shell script
+oc apply -f ./target/kubernetes/openshift.yml
+```
+
+```shell script
+oc create route edge \
+    --service person-service-quarkus \
+    --hostname person-service.${OCP4_WILDCARD_DOMAIN}
+```
+
+```shell script
+curl -k https://person-service.${OCP4_WILDCARD_DOMAIN}/person | jq
+```
+
+```shell script
+curl -k https://person-service.${OCP4_WILDCARD_DOMAIN}/q/health | jq
 ```
