@@ -87,11 +87,11 @@ oc new-app --template postgresql-persistent \
 ```
 
 ```shell script
-oc get pods | grep ${DATABASE_SERVICE_NAME} | grep -v -e -deploy -e -build
+oc -n database get pods | grep ${DATABASE_SERVICE_NAME} | grep -v -e -deploy -e -build
 ```
 
 ```shell script
-oc port-forward pod/postgresql-1-lk87v 15432:5432
+oc -n database port-forward pod/postgresql-1-lk87v 15432:5432
 ```
 
 ## Deploy APP Local
